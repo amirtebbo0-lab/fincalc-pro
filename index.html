@@ -1,1 +1,246 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"/>
+<meta name="theme-color" content="#c9a84c"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="FinCalc"/>
+<link rel="manifest" href="manifest.json"/>
+<title>FinCalc Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0a0c0f;--surface:#111418;--surface2:#181c22;--border:#1f2530;--gold:#c9a84c;--gold2:#e8c97a;--green:#2ecc71;--red:#e74c3c;--blue:#4a9eff;--text:#e8e6e0;--muted:#6b7280;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;--display:'Playfair Display',serif;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
+#app{display:flex;flex-direction:column;height:100%;padding-top:env(safe-area-inset-top,0px);}
+.app-header{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:0.9rem 1.25rem;display:flex;align-items:center;justify-content:space-between;}
+.header-logo{font-family:var(--display);font-size:1.2rem;font-weight:900;color:var(--gold);}
+.header-right{font-family:var(--mono);font-size:0.55rem;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;text-align:right;line-height:1.4;}
+.calc-picker{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;scrollbar-width:none;padding:0 0.5rem;}
+.calc-picker::-webkit-scrollbar{display:none;}
+.pick-btn{flex-shrink:0;padding:0.7rem 1rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:var(--mono);font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:0.2rem;}
+.pick-btn .pick-icon{font-size:1rem;}.pick-btn .pick-label{font-size:0.55rem;}
+.pick-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
+.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:1rem 1rem calc(1rem + env(safe-area-inset-bottom,0px));}
+.screen{display:none;}.screen.active{display:block;}
+.section-card{background:var(--surface);border:1px solid var(--border);padding:1.25rem;margin-bottom:0.75rem;}
+.section-title{font-family:var(--display);font-size:1rem;color:var(--gold2);margin-bottom:0.2rem;}
+.section-sub{font-family:var(--mono);font-size:0.55rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1.1rem;}
+.field{margin-bottom:0.9rem;}
+.field label{display:block;font-family:var(--mono);font-size:0.58rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.3rem;}
+.field input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:1rem;padding:0.7rem 0.9rem;outline:none;-moz-appearance:textfield;-webkit-appearance:none;}
+.field input::-webkit-outer-spin-button,.field input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.field input:focus{border-color:var(--gold);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;}
+.calc-btn{width:100%;padding:1rem;background:var(--gold);color:var(--bg);border:none;font-family:var(--mono);font-size:0.72rem;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;margin-top:0.25rem;}
+.calc-btn:active{background:var(--gold2);}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);overflow:hidden;margin-bottom:0.75rem;}
+.result-grid-3{grid-template-columns:1fr 1fr 1fr;}
+.result-item{background:var(--surface2);padding:1rem 0.9rem;}
+.result-label{font-family:var(--mono);font-size:0.52rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.3rem;}
+.result-value{font-family:var(--mono);font-size:1.3rem;font-weight:500;color:var(--text);line-height:1.1;}
+.result-value.sm{font-size:1rem;}.result-value.lg{font-size:1.7rem;}
+.rv-pos{color:var(--green);}.rv-neg{color:var(--red);}.rv-gold{color:var(--gold);}.rv-blue{color:var(--blue);}
+.breakdown{border:1px solid var(--border);margin-top:0.75rem;overflow:hidden;}
+.bd-head{background:var(--surface2);padding:0.55rem 0.9rem;font-family:var(--mono);font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--border);}
+.bd-row{display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0.9rem;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:0.7rem;}
+.bd-row:last-child{border-bottom:none;}.bd-row span:first-child{color:var(--muted);}
+.bd-row.total{background:var(--surface2);}.bd-row.total span{color:var(--gold)!important;font-weight:500;}
+.cf-list{display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.75rem;}
+.cf-row{display:flex;align-items:center;gap:0.5rem;}
+.cf-row label{font-family:var(--mono);font-size:0.58rem;color:var(--muted);width:45px;flex-shrink:0;}
+.cf-row input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:0.85rem;padding:0.55rem 0.7rem;outline:none;-moz-appearance:textfield;}
+.cf-row input::-webkit-outer-spin-button,.cf-row input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.cf-row input:focus{border-color:var(--gold);}
+.row-btns{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.5rem;}
+.btn-sm{padding:0.65rem;background:var(--surface2);color:var(--muted);border:1px solid var(--border);font-family:var(--mono);font-size:0.65rem;letter-spacing:0.08em;cursor:pointer;}
+.alert{padding:0.8rem 0.9rem;font-family:var(--mono);font-size:0.68rem;line-height:1.4;margin-top:0.75rem;border:1px solid;}
+.alert-good{background:rgba(46,204,113,0.08);border-color:rgba(46,204,113,0.25);color:var(--green);}
+.alert-bad{background:rgba(231,76,60,0.08);border-color:rgba(231,76,60,0.25);color:var(--red);}
+.alert-warn{background:rgba(201,168,76,0.08);border-color:rgba(201,168,76,0.25);color:var(--gold);}
+.bar-item{margin-bottom:0.8rem;}
+.bar-label-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:0.65rem;margin-bottom:0.28rem;}
+.bar-label-row span:first-child{color:var(--muted);}
+.bar-track{height:5px;background:var(--border);border-radius:99px;overflow:hidden;}
+.bar-fill{height:100%;background:var(--gold);border-radius:99px;}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);margin-top:0.75rem;}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.65rem;}
+thead th{background:var(--surface2);color:var(--gold);padding:0.6rem 0.75rem;text-align:right;font-weight:400;font-size:0.55rem;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;}
+thead th:first-child{text-align:left;}
+tbody td{padding:0.5rem 0.75rem;text-align:right;border-bottom:1px solid rgba(31,37,48,0.5);white-space:nowrap;}
+tbody td:first-child{text-align:left;color:var(--muted);}
+tbody tr:last-child td{border-bottom:none;}
+.rw-row{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.3rem;}
+.rw-lbl{font-family:var(--mono);font-size:0.55rem;color:var(--muted);width:42px;flex-shrink:0;}
+.rw-bar{flex:1;height:12px;background:var(--border);border-radius:2px;overflow:hidden;}
+.rw-fill{height:100%;border-radius:2px;}
+.rw-val{font-family:var(--mono);font-size:0.55rem;color:var(--text);width:65px;text-align:right;flex-shrink:0;}
+.wacc-row{display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:0.68rem;}
+.wacc-row:last-child{border-bottom:none;}.wacc-row span:first-child{color:var(--muted);}
+.wacc-input{width:72px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:0.8rem;padding:0.3rem 0.5rem;outline:none;text-align:right;-moz-appearance:textfield;}
+.wacc-input:focus{border-color:var(--gold);}
+.wacc-input::-webkit-outer-spin-button,.wacc-input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.sens-wrap{overflow-x:auto;margin-top:0.75rem;}
+.sens-table{border-collapse:collapse;font-family:var(--mono);font-size:0.62rem;width:100%;}
+.sens-table th,.sens-table td{padding:0.45rem 0.6rem;text-align:center;border:1px solid var(--border);white-space:nowrap;}
+.sens-table th{background:var(--surface2);color:var(--gold);font-weight:400;font-size:0.55rem;}
+.sens-hi{color:var(--green);}.sens-lo{color:var(--red);}.sens-mid{color:var(--gold);}
+.home-hero{background:var(--surface);border:1px solid var(--border);padding:2rem 1.5rem;margin-bottom:0.75rem;text-align:center;}
+.home-logo{font-family:var(--display);font-size:2.2rem;font-weight:900;color:var(--gold);margin-bottom:0.4rem;}
+.home-tagline{font-family:var(--mono);font-size:0.65rem;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:1.5rem;}
+.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;}
+.home-card{background:var(--surface2);border:1px solid var(--border);padding:1rem;cursor:pointer;text-align:left;}
+.home-card:active{border-color:var(--gold);}
+.home-card-icon{font-size:1.3rem;margin-bottom:0.4rem;display:block;}
+.home-card-name{font-family:var(--mono);font-size:0.65rem;color:var(--text);font-weight:500;margin-bottom:0.2rem;}
+.home-card-desc{font-family:var(--mono);font-size:0.55rem;color:var(--muted);line-height:1.4;}
+.scroll-area::-webkit-scrollbar{width:3px;}
+.scroll-area::-webkit-scrollbar-thumb{background:var(--border);}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="app-header">
+    <div class="header-logo">FinCalc Pro</div>
+    <div class="header-right">7 Calculators<br/>Professional Suite</div>
+  </div>
+  <div class="calc-picker">
+    <button class="pick-btn active" onclick="showScreen('home',this)"><span class="pick-icon">🏠</span><span class="pick-label">Home</span></button>
+    <button class="pick-btn" onclick="showScreen('dcf',this)"><span class="pick-icon">📊</span><span class="pick-label">DCF</span></button>
+    <button class="pick-btn" onclick="showScreen('lbo',this)"><span class="pick-icon">🏦</span><span class="pick-label">LBO</span></button>
+    <button class="pick-btn" onclick="showScreen('npvirr',this)"><span class="pick-icon">📈</span><span class="pick-label">NPV/IRR</span></button>
+    <button class="pick-btn" onclick="showScreen('loan',this)"><span class="pick-icon">💳</span><span class="pick-label">Loan</span></button>
+    <button class="pick-btn" onclick="showScreen('realestate',this)"><span class="pick-icon">🏠</span><span class="pick-label">RE ROI</span></button>
+    <button class="pick-btn" onclick="showScreen('breakeven',this)"><span class="pick-icon">⚖️</span><span class="pick-label">BEP</span></button>
+    <button class="pick-btn" onclick="showScreen('runway',this)"><span class="pick-icon">🚀</span><span class="pick-label">Runway</span></button>
+  </div>
+  <div class="scroll-area">
+    <div class="screen active" id="screen-home">
+      <div class="home-hero">
+        <div class="home-logo">FinCalc Pro</div>
+        <div class="home-tagline">Professional Financial Calculators</div>
+        <div class="home-grid">
+          <div class="home-card" onclick="switchTo('dcf')"><span class="home-card-icon">📊</span><div class="home-card-name">DCF Valuation</div><div class="home-card-desc">Intrinsic value & WACC</div></div>
+          <div class="home-card" onclick="switchTo('lbo')"><span class="home-card-icon">🏦</span><div class="home-card-name">LBO Returns</div><div class="home-card-desc">IRR & MOIC</div></div>
+          <div class="home-card" onclick="switchTo('npvirr')"><span class="home-card-icon">📈</span><div class="home-card-name">NPV / IRR</div><div class="home-card-desc">Project evaluation</div></div>
+          <div class="home-card" onclick="switchTo('loan')"><span class="home-card-icon">💳</span><div class="home-card-name">Loan Amort.</div><div class="home-card-desc">Full schedule</div></div>
+          <div class="home-card" onclick="switchTo('realestate')"><span class="home-card-icon">🏠</span><div class="home-card-name">Real Estate</div><div class="home-card-desc">Cap rate & CoC</div></div>
+          <div class="home-card" onclick="switchTo('breakeven')"><span class="home-card-icon">⚖️</span><div class="home-card-name">Break-Even</div><div class="home-card-desc">Unit economics</div></div>
+          <div class="home-card" onclick="switchTo('runway')" style="grid-column:1/-1;"><span class="home-card-icon">🚀</span><div class="home-card-name">Startup Runway</div><div class="home-card-desc">Cash burn & zero-date projections</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen" id="screen-dcf">
+      <div class="section-card">
+        <div class="section-title">DCF Valuation</div><div class="section-sub">Discounted Cash Flow · WACC · Terminal Value</div>
+        <div class="field-row"><div class="field"><label>WACC (%)</label><input type="number" id="dcf-wacc" value="10" step="0.5" inputmode="decimal"/></div><div class="field"><label>Terminal Growth (%)</label><input type="number" id="dcf-tgr" value="2.5" step="0.5" inputmode="decimal"/></div></div>
+        <div class="field-row"><div class="field"><label>Net Debt ($M)</label><input type="number" id="dcf-debt" value="500" inputmode="decimal"/></div><div class="field"><label>Shares Out. (M)</label><input type="number" id="dcf-shares" value="100" inputmode="decimal"/></div></div>
+        <label style="font-family:var(--mono);font-size:0.58rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;display:block;margin-bottom:0.4rem;">FCF Year 1–5 ($M)</label>
+        <div class="cf-list" id="dcf-cfs"></div>
+        <button class="calc-btn" onclick="calcDCF()">Calculate →</button>
+      </div>
+      <div class="section-card">
+        <div class="section-title" style="font-size:0.85rem;">WACC Builder</div><div class="section-sub">Auto-fills WACC above</div>
+        <div class="wacc-row"><span>Cost of Equity (%)</span><input class="wacc-input" type="number" id="wke" value="12" inputmode="decimal" onchange="calcWACC()"/></div>
+        <div class="wacc-row"><span>Cost of Debt (%)</span><input class="wacc-input" type="number" id="wkd" value="5" inputmode="decimal" onchange="calcWACC()"/></div>
+        <div class="wacc-row"><span>Tax Rate (%)</span><input class="wacc-input" type="number" id="wtax" value="21" inputmode="decimal" onchange="calcWACC()"/></div>
+        <div class="wacc-row"><span>Equity Weight (%)</span><input class="wacc-input" type="number" id="wwe" value="60" inputmode="decimal" onchange="calcWACC()"/></div>
+        <div class="wacc-row" style="background:var(--surface2);margin:0 -1.25rem -1.25rem;padding:0.7rem 1.25rem;border-top:1px solid var(--border);"><span style="color:var(--gold);font-weight:500;">→ Computed WACC</span><span id="wacc-out" style="color:var(--gold);font-family:var(--mono);font-size:0.9rem;">9.3%</span></div>
+      </div>
+      <div class="section-card" id="dcf-results-card" style="display:none;"><div class="section-title">Results</div><div class="section-sub">Valuation · Sensitivity</div><div id="dcf-out"></div></div>
+    </div>
+    <div class="screen" id="screen-lbo">
+      <div class="section-card">
+        <div class="section-title">LBO Returns</div><div class="section-sub">Leveraged Buyout · IRR · MOIC</div>
+        <div class="field-row"><div class="field"><label>Entry EV ($M)</label><input type="number" id="lev" value="1000" inputmode="decimal"/></div><div class="field"><label>Entry EBITDA ($M)</label><input type="number" id="lebitda" value="100" inputmode="decimal"/></div></div>
+        <div class="field-row"><div class="field"><label>Debt / EBITDA</label><input type="number" id="llev" value="5.0" step="0.5" inputmode="decimal"/></div><div class="field"><label>Interest Rate (%)</label><input type="number" id="lrate" value="7" step="0.5" inputmode="decimal"/></div></div>
+        <div class="field-row"><div class="field"><label>Exit EV/EBITDA</label><input type="number" id="lexitmult" value="9" step="0.5" inputmode="decimal"/></div><div class="field"><label>Exit EBITDA ($M)</label><input type="number" id="lexitebitda" value="140" inputmode="decimal"/></div></div>
+        <div class="field-row"><div class="field"><label>Hold Period (Yrs)</label><input type="number" id="lyrs" value="5" min="1" max="10" inputmode="numeric"/></div><div class="field"><label>Annual Paydown ($M)</label><input type="number" id="lpaydown" value="50" inputmode="decimal"/></div></div>
+        <button class="calc-btn" onclick="calcLBO()">Compute Returns →</button>
+      </div>
+      <div class="section-card" id="lbo-results-card" style="display:none;"><div class="section-title">Results</div><div class="section-sub">IRR · MOIC · Value Bridge</div><div id="lbo-out"></div></div>
+    </div>
+    <div class="screen" id="screen-npvirr">
+      <div class="section-card">
+        <div class="section-title">NPV / IRR</div><div class="section-sub">Project Evaluation · Payback Period</div>
+        <div class="field"><label>Discount Rate (%)</label><input type="number" id="nrate" value="10" step="0.5" inputmode="decimal"/></div>
+        <label style="font-family:var(--mono);font-size:0.58rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;display:block;margin-bottom:0.4rem;">Cash Flows (Yr 0 = negative investment)</label>
+        <div class="cf-list" id="npv-cfs"></div>
+        <div class="row-btns"><button class="btn-sm" onclick="addNPVRow()">+ Add Year</button><button class="btn-sm" onclick="removeNPVRow()">− Remove</button></div>
+        <button class="calc-btn" onclick="calcNPVIRR()">Evaluate →</button>
+      </div>
+      <div class="section-card" id="npv-results-card" style="display:none;"><div class="section-title">Results</div><div class="section-sub">NPV · IRR · Decision</div><div id="npv-out"></div></div>
+    </div>
+    <div class="screen" id="screen-loan">
+      <div class="section-card">
+        <div class="section-title">Loan Amortization</div><div class="section-sub">Full Schedule · Extra Payments</div>
+        <div class="field"><label>Loan Amount ($)</label><input type="number" id="lprin" value="500000" inputmode="decimal"/></div>
+        <div class="field-row"><div class="field"><label>Annual Rate (%)</label><input type="number" id="loanrate" value="6.5" step="0.25" inputmode="decimal"/></div><div class="field"><label>Term (Years)</label><input type="number" id="loanyrs" value="30" min="1" max="40" inputmode="numeric"/></div></div>
+        <div class="field-row"><div class="field"><label>Extra Monthly ($)</label><input type="number" id="loanextra" value="0" inputmode="decimal"/></div><div class="field"><label>Start Year</label><input type="number" id="loanstart" value="2025" inputmode="numeric"/></div></div>
+        <button class="calc-btn" onclick="calcLoan()">Generate Schedule →</button>
+      </div>
+      <div class="section-card" id="loan-results-card" style="display:none;"><div class="section-title">Results</div><div class="section-sub">Summary · Annual Schedule</div><div id="loan-out"></div></div>
+    </div>
+    <div class="screen" id="screen-realestate">
+      <div class="section-card">
+        <div class="section-title">Real Estate ROI</div><div class="section-sub">Cap Rate · Cash-on-Cash · 10-Year</div>
+        <div class="field-row"><div class="field"><label>Purchase Price ($)</label><input type="number" id="re-price" value="400000" inputmode="decimal"/></div><div class="field"><label>Down Payment (%)</label><input type="number" id="re-down" value="25" step="5" inputmode="decimal"/></div></div>
+        <div class="field-row"><div class="field"><label>Mortgage Rate (%)</label><input type="number" id="re-mrate" value="7.0" step="0.25" inputmode="decimal"/></div><div class="field"><label>Term (Yrs)</label><input type="number" id="re-mterm" value="30" inputmode="numeric"/></div></div>
+        <div class="field-row"><div class="field"><label>Monthly Rent ($)</label><input type="number" id="re-rent" value="2800" inputmode="decimal"/></div><div class="field"><label>Vacancy Rate (%)</label><input type="number" id="re-vacancy" value="5" step="1" inputmode="decimal"/></div></div>
+        <div class="field-row"><div class="field"><label>Annual Expenses ($)</label><input type="number" id="re-expenses" value="8000" inputmode="decimal"/></div><div class="field"><label>Appreciation (%/yr)</label><input type="number" id="re-appreciation" value="3" step="0.5" inputmode="decimal"/></div></div>
+        <button class="calc-btn" onclick="calcRealEstate()">Analyze →</button>
+      </div>
+      <div class="section-card" id="re-results-card" style="display:none;"><div class="section-title">Results</div><div class="section-sub">Returns · 10-Year Projection</div><div id="re-out"></div></div>
+    </div>
+    <div class="screen" id="screen-breakeven">
+      <div class="section-card">
+        <div class="section-title">Break-Even Analysis</div><div class="section-sub">Unit Economics · BEP · DOL</div>
+        <div class="field-row"><div class="field"><label>Selling Price ($)</label><input type="number" id="be-price" value="50" inputmode="decimal"/></div><div class="field"><label>Variable Cost ($)</label><input type="number" id="be-vc" value="20" inputmode="decimal"/></div></div>
+        <div class="field"><label>Fixed Costs per Period ($)</label><input type="number" id="be-fc" value="90000" inputmode="decimal"/></div>
+        <div class="field-row"><div class="field"><label>Current Units Sold</label><input type="number" id="be-units" value="5000" inputmode="numeric"/></div><div class="field"><label>Target Profit ($)</label><input type="number" id="be-target" value="30000" inputmode="decimal"/></div></div>
+        <button class="calc-btn" onclick="calcBreakEven()">Calculate →</button>
+      </div>
+      <div class="section-card" id="be-results-card" style="display:none;"><div class="section-title">Results</div><div class="section-sub">BEP · Margins · P&L</div><div id="be-out"></div></div>
+    </div>
+    <div class="screen" id="screen-runway">
+      <div class="section-card">
+        <div class="section-title">Startup Runway</div><div class="section-sub">Cash Burn · Zero Date · Scenarios</div>
+        <div class="field"><label>Current Cash ($)</label><input type="number" id="rw-cash" value="1500000" inputmode="decimal"/></div>
+        <div class="field-row"><div class="field"><label>Monthly Revenue ($)</label><input type="number" id="rw-rev" value="50000" inputmode="decimal"/></div><div class="field"><label>Monthly Expenses ($)</label><input type="number" id="rw-exp" value="180000" inputmode="decimal"/></div></div>
+        <div class="field-row"><div class="field"><label>Rev. Growth (%/mo)</label><input type="number" id="rw-revg" value="8" step="1" inputmode="decimal"/></div><div class="field"><label>Exp. Growth (%/mo)</label><input type="number" id="rw-expg" value="2" step="1" inputmode="decimal"/></div></div>
+        <div class="field-row"><div class="field"><label>Planned Raise ($)</label><input type="number" id="rw-raise" value="0" inputmode="decimal"/></div><div class="field"><label>Raise in Month #</label><input type="number" id="rw-raisemo" value="6" min="1" inputmode="numeric"/></div></div>
+        <button class="calc-btn" onclick="calcRunway()">Compute →</button>
+      </div>
+      <div class="section-card" id="rw-results-card" style="display:none;"><div class="section-title">Results</div><div class="section-sub">Runway · Monthly Burn Chart</div><div id="rw-out"></div></div>
+    </div>
+  </div>
+</div>
+<script>
+const f=(n,d=1)=>isNaN(n)?'—':n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fM=n=>'$'+f(n,1)+'M';const fP=n=>f(n,1)+'%';const fX=n=>f(n,2)+'x';
+const f$=(n,d=0)=>isNaN(n)?'—':'$'+n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function showScreen(name,btn){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.pick-btn').forEach(b=>b.classList.remove('active'));document.getElementById('screen-'+name).classList.add('active');if(btn)btn.classList.add('active');}
+function switchTo(name){const btn=[...document.querySelectorAll('.pick-btn')].find(b=>b.getAttribute('onclick')?.includes("'"+name+"'"));showScreen(name,btn);}
+const dcfDef=[120,140,160,185,210];
+(()=>{const c=document.getElementById('dcf-cfs');dcfDef.forEach((v,i)=>c.innerHTML+=`<div class="cf-row"><label>Yr ${i+1}</label><input type="number" inputmode="decimal" id="dcf-cf-${i}" value="${v}"/></div>`);})();
+function calcWACC(){const ke=+document.getElementById('wke').value/100,kd=+document.getElementById('wkd').value/100,tax=+document.getElementById('wtax').value/100,we=+document.getElementById('wwe').value/100;const w=(ke*we+kd*(1-tax)*(1-we))*100;document.getElementById('wacc-out').textContent=fP(w);document.getElementById('dcf-wacc').value=f(w,1);}
+calcWACC();
+function calcDCF(){const wacc=+document.getElementById('dcf-wacc').value/100,tgr=+document.getElementById('dcf-tgr').value/100,debt=+document.getElementById('dcf-debt').value,shares=+document.getElementById('dcf-shares').value;const cfs=[0,1,2,3,4].map(i=>+document.getElementById('dcf-cf-'+i).value);let pvFCF=0;const pvArr=[];cfs.forEach((cf,i)=>{const pv=cf/Math.pow(1+wacc,i+1);pvFCF+=pv;pvArr.push(pv);});const tv=cfs[4]*(1+tgr)/(wacc-tgr),pvTV=tv/Math.pow(1+wacc,5);const ev=pvFCF+pvTV,eq=ev-debt,pps=eq/shares,tvPct=pvTV/ev*100;const waccs=[wacc-0.02,wacc-0.01,wacc,wacc+0.01,wacc+0.02];const tgrs=[tgr-0.01,tgr,tgr+0.01];let st=`<div class="sens-wrap"><table class="sens-table"><thead><tr><th>WACC\\TGR</th>${tgrs.map(t=>`<th>${fP(t*100)}</th>`).join('')}</tr></thead><tbody>`;waccs.forEach(w=>{st+=`<tr><th>${fP(w*100)}</th>`;tgrs.forEach(t=>{let pf=0;cfs.forEach((cf,i)=>pf+=cf/Math.pow(1+w,i+1));const ps2=(pf+(cfs[4]*(1+t)/(w-t))/Math.pow(1+w,5)-debt)/shares;const cl=ps2>pps*1.05?'sens-hi':ps2<pps*0.95?'sens-lo':'sens-mid';st+=`<td class="${cl}">$${f(ps2,1)}</td>`;});st+='</tr>';});st+='</tbody></table></div>';document.getElementById('dcf-out').innerHTML=`<div class="result-grid"><div class="result-item"><div class="result-label">Enterprise Value</div><div class="result-value rv-gold">${fM(ev)}</div></div><div class="result-item"><div class="result-label">Equity Value</div><div class="result-value">${fM(eq)}</div></div><div class="result-item"><div class="result-label">Share Price</div><div class="result-value lg rv-pos">$${f(pps,2)}</div></div><div class="result-item"><div class="result-label">TV % of EV</div><div class="result-value rv-blue">${fP(tvPct)}</div></div></div><div class="breakdown"><div class="bd-head">Value Bridge</div>${pvArr.map((pv,i)=>`<div class="bd-row"><span>PV FCF Yr ${i+1}</span><span>${fM(pv)}</span></div>`).join('')}<div class="bd-row"><span>PV Terminal Value</span><span>${fM(pvTV)}</span></div><div class="bd-row"><span>Less: Net Debt</span><span style="color:var(--red);">(${fM(debt)})</span></div><div class="bd-row total"><span>Equity Value</span><span>${fM(eq)}</span></div></div><div class="bd-head" style="border:1px solid var(--border);border-bottom:none;margin-top:0.75rem;">Share Price Sensitivity</div>${st}`;document.getElementById('dcf-results-card').style.display='block';document.getElementById('dcf-results-card').scrollIntoView({behavior:'smooth',block:'start'});}
+function calcLBO(){const ev=+document.getElementById('lev').value,ebitda=+document.getElementById('lebitda').value,lev=+document.getElementById('llev').value,rate=+document.getElementById('lrate').value/100,exitm=+document.getElementById('lexitmult').value,exite=+document.getElementById('lexitebitda').value,yrs=+document.getElementById('lyrs').value,pd=+document.getElementById('lpaydown').value;const di=ebitda*lev,ei=ev-di,evx=exitm*exite,dx=Math.max(0,di-pd*yrs),ex=evx-dx;const moic=ex/ei,irr=(Math.pow(moic,1/yrs)-1)*100;const iC=irr>=20?'rv-pos':irr>=15?'rv-gold':'rv-neg',mC=moic>=2.5?'rv-pos':moic>=2?'rv-gold':'rv-neg';const bars=[{l:'EBITDA Growth',v:(exite/ebitda-1)*100},{l:'Debt Paydown',v:pd*yrs/di*100},{l:'Multiple Expansion',v:Math.max(0,(exitm-ev/ebitda)/(ev/ebitda)*100)}];document.getElementById('lbo-out').innerHTML=`<div class="result-grid"><div class="result-item"><div class="result-label">IRR</div><div class="result-value lg ${iC}">${fP(irr)}</div></div><div class="result-item"><div class="result-label">MOIC</div><div class="result-value lg ${mC}">${fX(moic)}</div></div><div class="result-item"><div class="result-label">Equity In</div><div class="result-value">${fM(ei)}</div></div><div class="result-item"><div class="result-label">Equity Out</div><div class="result-value rv-pos">${fM(ex)}</div></div></div><div class="breakdown"><div class="bd-head">Deal Structure</div><div class="bd-row"><span>Entry EV</span><span>${fM(ev)}</span></div><div class="bd-row"><span>Entry Debt</span><span style="color:var(--red);">${fM(di)}</span></div><div class="bd-row"><span>Equity Check</span><span>${fM(ei)}</span></div><div class="bd-row"><span>Exit EV</span><span>${fM(evx)}</span></div><div class="bd-row"><span>Exit Debt</span><span style="color:var(--red);">${fM(dx)}</span></div><div class="bd-row total"><span>Equity at Exit</span><span>${fM(ex)}</span></div></div><div style="margin-top:0.75rem;">${bars.map(b=>`<div class="bar-item"><div class="bar-label-row"><span>${b.l}</span><span>${fP(Math.min(b.v,999))}</span></div><div class="bar-track"><div class="bar-fill" style="width:${clamp(b.v,0,100)}%"></div></div></div>`).join('')}</div>`;document.getElementById('lbo-results-card').style.display='block';document.getElementById('lbo-results-card').scrollIntoView({behavior:'smooth',block:'start'});}
+const npvDef=[-1000,200,300,350,400,450];let npvN=npvDef.length;
+(()=>{const c=document.getElementById('npv-cfs');npvDef.forEach((v,i)=>c.innerHTML+=`<div class="cf-row" id="nr-${i}"><label>Yr ${i}</label><input type="number" inputmode="decimal" id="ncf-${i}" value="${v}"/></div>`);})();
+function addNPVRow(){document.getElementById('npv-cfs').innerHTML+=`<div class="cf-row" id="nr-${npvN}"><label>Yr ${npvN}</label><input type="number" inputmode="decimal" id="ncf-${npvN}" value="0"/></div>`;npvN++;}
+function removeNPVRow(){if(npvN<=2)return;npvN--;const r=document.getElementById('nr-'+npvN);if(r)r.remove();}
+function npv_(cfs,r){return cfs.reduce((s,c,i)=>s+c/Math.pow(1+r,i),0);}
+function irr_(cfs){let lo=-0.9999,hi=10;for(let i=0;i<1000;i++){const m=(lo+hi)/2;npv_(cfs,m)>0?lo=m:hi=m;if(hi-lo<1e-7)break;}return(lo+hi)/2;}
+function calcNPVIRR(){const rate=+document.getElementById('nrate').value/100;const cfs=[];for(let i=0;i<npvN;i++){const e=document.getElementById('ncf-'+i);if(e)cfs.push(+e.value);}const npvVal=npv_(cfs,rate),irrVal=irr_(cfs)*100,init=Math.abs(cfs[0]),pi=(npvVal+init)/init;let cum=0,pb=null;for(let i=0;i<cfs.length;i++){const prev=cum;cum+=cfs[i];if(cum>=0&&pb===null)pb=i-prev/cfs[i];}const nC=npvVal>0?'rv-pos':'rv-neg',iC=irrVal>+document.getElementById('nrate').value?'rv-pos':'rv-neg';const profile=[0,5,10,15,20,25,30].map(r=>{const n=npv_(cfs,r/100),cl=n>0?'sens-hi':'sens-lo';return`<tr><td>${r}%</td><td class="${cl}">${f$(n,0)}</td><td style="color:${n>0?'var(--green)':'var(--red)'};">${n>0?'Accept':'Reject'}</td></tr>`;}).join('');document.getElementById('npv-out').innerHTML=`<div class="result-grid"><div class="result-item"><div class="result-label">NPV</div><div class="result-value lg ${nC}">${f$(npvVal,0)}</div></div><div class="result-item"><div class="result-label">IRR</div><div class="result-value lg ${iC}">${isNaN(irrVal)?'N/A':fP(irrVal)}</div></div><div class="result-item"><div class="result-label">Prof. Index</div><div class="result-value ${pi>1?'rv-pos':'rv-neg'}">${f(pi,2)}x</div></div><div class="result-item"><div class="result-label">Payback</div><div class="result-value rv-blue">${pb?f(pb,1)+' yrs':'N/A'}</div></div></div><div class="alert ${npvVal>0?'alert-good':'alert-bad'}">${npvVal>0?'✓ Creates value — IRR exceeds hurdle rate':'✗ Destroys value — IRR below hurdle rate'}</div><div class="table-wrap"><table><thead><tr><th>Rate</th><th>NPV</th><th>Decision</th></tr></thead><tbody>${profile}</tbody></table></div>`;document.getElementById('npv-results-card').style.display='block';document.getElementById('npv-results-card').scrollIntoView({behavior:'smooth',block:'start'});}
+function calcLoan(){const P=+document.getElementById('lprin').value,rate=+document.getElementById('loanrate').value/100/12,n=+document.getElementById('loanyrs').value*12,extra=+document.getElementById('loanextra').value,sy=+document.getElementById('loanstart').value;const base=P*rate*Math.pow(1+rate,n)/(Math.pow(1+rate,n)-1),pmt=base+extra;let bal=P,totalInt=0,mo=0,rows=[];while(bal>0.01&&mo<n+240){const yr=Math.floor(mo/12);if(!rows[yr])rows[yr]={year:sy+yr,prin:0,int:0,startBal:bal};const ip=bal*rate,pp=Math.min(pmt-ip,bal);bal-=pp;totalInt+=ip;rows[yr].prin+=pp;rows[yr].int+=ip;rows[yr].endBal=Math.max(0,bal);mo++;}const yrs=mo/12,saved=(base*n)-(pmt*mo);let trs='';rows.forEach(r=>{if(!r)return;trs+=`<tr><td>${r.year}</td><td>${f$(r.startBal,0)}</td><td>${f$(r.prin,0)}</td><td>${f$(r.int,0)}</td><td>${f$(r.endBal,0)}</td></tr>`;});document.getElementById('loan-out').innerHTML=`<div class="result-grid"><div class="result-item"><div class="result-label">Monthly Payment</div><div class="result-value rv-gold">${f$(pmt,2)}</div></div><div class="result-item"><div class="result-label">Total Interest</div><div class="result-value rv-neg">${f$(totalInt,0)}</div></div><div class="result-item"><div class="result-label">Total Paid</div><div class="result-value">${f$(P+totalInt,0)}</div></div><div class="result-item"><div class="result-label">Payoff In</div><div class="result-value rv-pos">${f(yrs,1)} yrs</div></div></div>${extra>0?`<div class="alert alert-good">Extra payments save ${f$(Math.abs(saved),0)} and finish ${f((+document.getElementById('loanyrs').value)-yrs,1)} yrs early</div>`:''}<div class="table-wrap"><table><thead><tr><th>Year</th><th>Open. Bal</th><th>Principal</th><th>Interest</th><th>Close. Bal</th></tr></thead><tbody>${trs}</tbody></table></div>`;document.getElementById('loan-results-card').style.display='block';document.getElementById('loan-results-card').scrollIntoView({behavior:'smooth',block:'start'});}
+function calcRealEstate(){const price=+document.getElementById('re-price').value,dpPct=+document.getElementById('re-down').value/100,mr=+document.getElementById('re-mrate').value/100/12,mt=+document.getElementById('re-mterm').value*12,rent=+document.getElementById('re-rent').value,vac=+document.getElementById('re-vacancy').value/100,exp=+document.getElementById('re-expenses').value,appr=+document.getElementById('re-appreciation').value/100;const down=price*dpPct,loan=price-down;const mort=loan*mr*Math.pow(1+mr,mt)/(Math.pow(1+mr,mt)-1);const grossRent=rent*12*(1-vac),noi=grossRent-exp;const capRate=noi/price*100,annCF=noi-mort*12,coc=annCF/down*100;let trs='',pv=price;for(let yr=1;yr<=10;yr++){pv*=(1+appr);const yr_rent=rent*12*(1-vac)*Math.pow(1.03,yr-1),yr_noi=yr_rent-exp*Math.pow(1.02,yr-1),yr_cf=yr_noi-mort*12;trs+=`<tr><td>${yr}</td><td>${f$(pv,0)}</td><td>${f$(yr_cf,0)}</td></tr>`;}const cocC=coc>8?'rv-pos':coc>4?'rv-gold':'rv-neg',crC=capRate>6?'rv-pos':capRate>4?'rv-gold':'rv-neg';document.getElementById('re-out').innerHTML=`<div class="result-grid result-grid-3"><div class="result-item"><div class="result-label">Cap Rate</div><div class="result-value sm ${crC}">${fP(capRate)}</div></div><div class="result-item"><div class="result-label">CoC Return</div><div class="result-value sm ${cocC}">${fP(coc)}</div></div><div class="result-item"><div class="result-label">Annual CF</div><div class="result-value sm ${annCF>0?'rv-pos':'rv-neg'}">${f$(annCF,0)}</div></div></div><div class="result-grid"><div class="result-item"><div class="result-label">Down Payment</div><div class="result-value sm">${f$(down,0)}</div></div><div class="result-item"><div class="result-label">Monthly Mortgage</div><div class="result-value sm">${f$(mort,0)}</div></div><div class="result-item"><div class="result-label">Gross Rent/yr</div><div class="result-value sm rv-pos">${f$(grossRent,0)}</div></div><div class="result-item"><div class="result-label">NOI</div><div class="result-value sm rv-gold">${f$(noi,0)}</div></div></div><div class="alert ${coc>8?'alert-good':coc>4?'alert-warn':'alert-bad'}">${coc>8?'✓ Strong — above 8% CoC':coc>4?'⚠ Moderate — below 8% benchmark':'✗ Weak — below 4% CoC'}</div><div class="table-wrap"><table><thead><tr><th>Year</th><th>Property Value</th><th>Cash Flow</th></tr></thead><tbody>${trs}</tbody></table></div>`;document.getElementById('re-results-card').style.display='block';document.getElementById('re-results-card').scrollIntoView({behavior:'smooth',block:'start'});}
+function calcBreakEven(){const price=+document.getElementById('be-price').value,vc=+document.getElementById('be-vc').value,fc=+document.getElementById('be-fc').value,units=+document.getElementById('be-units').value,target=+document.getElementById('be-target').value;const cm=price-vc,cmPct=cm/price*100,bepU=fc/cm,bepR=bepU*price;const rev=units*price,tvc=units*vc,profit=rev-tvc-fc;const mos=(rev-bepR)/rev*100,dol=(rev-tvc)/(rev-tvc-fc);const targetU=(fc+target)/cm;document.getElementById('be-out').innerHTML=`<div class="result-grid"><div class="result-item"><div class="result-label">BEP (Units)</div><div class="result-value rv-gold">${Math.ceil(bepU).toLocaleString()}</div></div><div class="result-item"><div class="result-label">BEP (Revenue)</div><div class="result-value rv-gold">${f$(bepR,0)}</div></div><div class="result-item"><div class="result-label">CM / Unit</div><div class="result-value rv-pos">${f$(cm,2)}</div></div><div class="result-item"><div class="result-label">CM Ratio</div><div class="result-value rv-pos">${fP(cmPct)}</div></div></div><div class="result-grid"><div class="result-item"><div class="result-label">Current Profit</div><div class="result-value ${profit>=0?'rv-pos':'rv-neg'}">${f$(profit,0)}</div></div><div class="result-item"><div class="result-label">Margin of Safety</div><div class="result-value ${mos>20?'rv-pos':mos>0?'rv-gold':'rv-neg'}">${fP(mos)}</div></div><div class="result-item"><div class="result-label">Op. Leverage</div><div class="result-value rv-blue">${f(dol,2)}x</div></div><div class="result-item"><div class="result-label">Units for Target</div><div class="result-value">${Math.ceil(targetU).toLocaleString()}</div></div></div><div class="alert ${units>=bepU?'alert-good':'alert-bad'}">${units>=bepU?'✓ Above BEP — generating profit':'✗ Below BEP — operating at a loss'}</div><div class="breakdown"><div class="bd-head">P&L at ${units.toLocaleString()} Units</div><div class="bd-row"><span>Revenue</span><span>${f$(rev,0)}</span></div><div class="bd-row"><span>Variable Costs</span><span style="color:var(--red);">(${f$(tvc,0)})</span></div><div class="bd-row"><span>Contribution Margin</span><span style="color:var(--green);">${f$(rev-tvc,0)}</span></div><div class="bd-row"><span>Fixed Costs</span><span style="color:var(--red);">(${f$(fc,0)})</span></div><div class="bd-row total"><span>${profit>=0?'Net Profit':'Net Loss'}</span><span style="color:${profit>=0?'var(--green)':'var(--red)'};">${f$(profit,0)}</span></div></div>`;document.getElementById('be-results-card').style.display='block';document.getElementById('be-results-card').scrollIntoView({behavior:'smooth',block:'start'});}
+function calcRunway(){const cash=+document.getElementById('rw-cash').value,rev=+document.getElementById('rw-rev').value,exp=+document.getElementById('rw-exp').value,rg=+document.getElementById('rw-revg').value/100,eg=+document.getElementById('rw-expg').value/100,raise=+document.getElementById('rw-raise').value,rmo=+document.getElementById('rw-raisemo').value;let bal=cash,mo=0,data=[],curR=rev,curE=exp,totalBurn=0;while(bal>0&&mo<60){if(mo===rmo-1&&raise>0)bal+=raise;const burn=curE-curR;bal-=burn;totalBurn+=burn;data.push({mo:mo+1,bal:Math.max(0,bal),burn});curR*=(1+rg);curE*=(1+eg);mo++;if(bal<=0)break;}const maxBal=cash+(raise>0?raise:0);const burnC=mo>18?'rv-pos':mo>12?'rv-gold':'rv-neg';const zeroDate=new Date(Date.now()+mo*30*24*3600*1000).toLocaleDateString('en-US',{month:'short',year:'numeric'});const bars=data.slice(0,Math.min(18,data.length)).map(d=>{const pct=clamp(d.bal/maxBal*100,0,100);const col=d.bal>cash*0.5?'var(--green)':d.bal>cash*0.2?'var(--gold)':'var(--red)';return`<div class="rw-row"><span class="rw-lbl">Mo ${d.mo}</span><div class="rw-bar"><div class="rw-fill" style="width:${pct}%;background:${col};"></div></div><span class="rw-val">${f$(d.bal,0)}</span></div>`;}).join('');document.getElementById('rw-out').innerHTML=`<div class="result-grid"><div class="result-item"><div class="result-label">Runway</div><div class="result-value lg ${burnC}">${mo} mo</div></div><div class="result-item"><div class="result-label">Zero-Cash Date</div><div class="result-value sm ${burnC}">${zeroDate}</div></div><div class="result-item"><div class="result-label">Initial Net Burn</div><div class="result-value rv-neg">${f$(exp-rev,0)}/mo</div></div><div class="result-item"><div class="result-label">Avg Net Burn</div><div class="result-value">${f$(totalBurn/mo,0)}/mo</div></div></div><div class="alert ${mo>18?'alert-good':mo>12?'alert-warn':'alert-bad'}">${mo>18?'✓ Strong runway':mo>12?'⚠ Start fundraising within 6 months':'✗ Critical — fundraise immediately'}</div><div style="margin-top:0.75rem;">${bars}</div>`;document.getElementById('rw-results-card').style.display='block';document.getElementById('rw-results-card').scrollIntoView({behavior:'smooth',block:'start'});}
+</script>
+</body>
+</html>
